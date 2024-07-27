@@ -1,12 +1,12 @@
 """
-Mahenur Master
-Group: Mahenur Master, Nisharg Patel, Siddharth Patel, Sneha Malhotra
+Authors: Mahenur Master, Sneha Malhotra, Nisharg Patel, Siddharth Patel
+
 Description:
- Creates the relationships table in the Social Network database
- and populates it with 100 fake relationships.
+This script creates the 'relationships' table in the Social Network database
+and populates it with 100 fake relationships.
 
 Usage:
- python create_relationships.py
+python create_relationships.py
 """
 
 import os
@@ -14,19 +14,22 @@ import sqlite3
 from faker import Faker
 from random import randint, choice
 
-# Determine the path of the database
+# Establish connection to the database
+con = sqlite3.connect('social_network.db')
+cur = con.cursor()
+
+# Define the path of the database
 script_dir = os.path.dirname(os.path.abspath(__file__))
 db_path = os.path.join(script_dir, 'social_network.db')
 
 def main():
     create_relationships_table()
     populate_relationships_table()
+    con.close()
 
 def create_relationships_table():
-    """Creates the relationships table in the DB"""
-    con = sqlite3.connect(db_path)
-    cur = con.cursor()
-
+    """Sets up the 'relationships' table in the database."""
+    # SQL statement to create the 'relationships' table
     create_relationships_tbl_query = """
         CREATE TABLE IF NOT EXISTS relationships
         (
@@ -39,16 +42,13 @@ def create_relationships_table():
             FOREIGN KEY (person2_id) REFERENCES people (id)
         );
     """
-    # Execute the SQL query to create the 'relationships' table.
+    # Execute the SQL statement to create the table
     cur.execute(create_relationships_tbl_query)
     con.commit()
-    con.close()
 
 def populate_relationships_table():
-    """Adds 100 random relationships to the DB"""
-    con = sqlite3.connect(db_path)
-    cur = con.cursor()
-
+    """Inserts 100 fake relationship records into the 'relationships' table."""
+    # SQL statement to insert data into the 'relationships' table
     add_relationship_query = """
         INSERT INTO relationships
         (
@@ -59,33 +59,30 @@ def populate_relationships_table():
         )
         VALUES (?, ?, ?, ?);
     """
+    
     fake = Faker()
-    i = 0
-    while i < 100:
-        # Randomly select first person in relationship
+    for _ in range(100):
+        # Randomly select the first person in the relationship
         person1_id = randint(1, 200)
 
-        # Randomly select second person in relationship
-        # Loop ensures person will not be in a relationship with themself
+        # Randomly select the second person in the relationship, ensuring it's not the same as the first
         person2_id = randint(1, 200)
-        
         while person2_id == person1_id:
             person2_id = randint(1, 200)
 
-        # Randomly select a relationship type
-        rel_type = choice(('friend', 'spouse', 'partner', 'relative'))
+        # Randomly select a type of relationship
+        rel_type = choice(['friend', 'spouse', 'partner', 'relative'])
 
-        # Randomly select a relationship start date between now and 50 years ago
+        # Randomly select a start date for the relationship within the last 50 years
         start_date = fake.date_between(start_date='-50y', end_date='today')
 
-        # Create tuple of data for the new relationship
+        # Create a tuple with the new relationship data
         new_relationship = (person1_id, person2_id, rel_type, start_date)
 
-        # Add the new relationship to the DB
+        # Insert the new relationship into the database
         cur.execute(add_relationship_query, new_relationship)
-        i += 1
+
     con.commit()
-    con.close()
 
 if __name__ == '__main__':
     main()
